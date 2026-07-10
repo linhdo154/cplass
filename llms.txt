@@ -71,7 +71,7 @@ plot(csa$s, csa$csa, type = "l", xlab = "speed", ylab = "cumulative time")
 See
 [`vignette("cplass_example")`](https://linhdo154.github.io/cplass/articles/cplass_example.md)
 for a complete walkthrough, or the [package
-website](https://linhdo154.github.io/CPLASS/) once published.
+website](https://linhdo154.github.io/cplass/) once published.
 
 ## What’s in the box
 
