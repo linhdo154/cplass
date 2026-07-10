@@ -14,8 +14,8 @@ bibentry(
   primaryClass  = "stat.ME",
   url      = "https://arxiv.org/abs/2510.27150",
   textVersion = paste(
-    "Do L, Do D, Cook KJ, McKinley SA (2026).",
-    "Change-in-velocity detection for multidimensional data.",
+    "Do L, Do D, Cook KJ, Shen Y McKinley SA (2026).",
+    "Change-in-velocity detection in multidimensional data.",
     "arXiv:2510.27150 [stat.ME].",
     "https://arxiv.org/abs/2510.27150"
   )
