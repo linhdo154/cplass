@@ -11,8 +11,8 @@
 Source:
 [`inst/CITATION`](https://github.com/linhdo154/cplass/blob/HEAD/inst/CITATION)
 
-Do L, Do D, Cook KJ, McKinley SA (2026). Change-in-velocity detection
-for multidimensional data. arXiv:2510.27150 \[stat.ME\].
+Do L, Do D, Cook KJ, Shen Y McKinley SA (2026). Change-in-velocity
+detection in multidimensional data. arXiv:2510.27150 \[stat.ME\].
 https://arxiv.org/abs/2510.27150
 
     @Misc{,
