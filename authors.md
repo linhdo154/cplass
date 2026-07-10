@@ -33,6 +33,6 @@ Piecewise-Linear Approximation via Stochastic Search. R package version
       title = {cplass: Continuous Piecewise-Linear Approximation via Stochastic Search},
       author = {Linh Do and Dat Do and Keisha J. Cook and Yitao Shen and Scott A. McKinley},
       year = {2026},
-      note = {R package version 0.1.2},
+      note = {R package version 0.1.1},
       url = {https://github.com/linhdo154/cplass},
     }
