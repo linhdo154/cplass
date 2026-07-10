@@ -11,16 +11,18 @@
 Source:
 [`inst/CITATION`](https://github.com/linhdo154/cplass/blob/HEAD/inst/CITATION)
 
-Do L, Do D, Cook KJ, Shen Y, McKinley SA (2026). Change-in-velocity
-detection in multidimensional data. Mathematical Biosciences and
-Engineering, 19(x).
+Do L, Do D, Cook KJ, McKinley SA (2026). Change-in-velocity detection
+for multidimensional data. arXiv:2510.27150 \[stat.ME\].
+https://arxiv.org/abs/2510.27150
 
-    @Article{,
-      title = {Change-in-velocity detection in multidimensional data},
+    @Misc{,
+      title = {Change-in-velocity detection for multidimensional data},
       author = {Linh Do and Dat Do and Keisha J. Cook and Yitao Shen and Scott A. McKinley},
-      journal = {Mathematical Biosciences and Engineering},
       year = {2026},
-      volume = {19},
+      eprint = {2510.27150},
+      archiveprefix = {arXiv},
+      primaryclass = {stat.ME},
+      url = {https://arxiv.org/abs/2510.27150},
     }
 
 Do L, Do D, Cook KJ, Shen Y, McKinley SA (2026). cplass: Continuous
