@@ -1,0 +1,36 @@
+# Authors and Citation
+
+## Authors
+
+- **Linh Do**. Author, maintainer.
+
+- **Scott A. McKinley**. Author.
+
+## Citation
+
+Source:
+[`inst/CITATION`](https://github.com/linhdo154/cplass/blob/HEAD/inst/CITATION)
+
+Do L, Do D, Cook KJ, Shen Y, McKinley SA (2026). Change-in-velocity
+detection in multidimensional data. Mathematical Biosciences and
+Engineering, 19(x).
+
+    @Article{,
+      title = {Change-in-velocity detection in multidimensional data},
+      author = {Linh Do and Dat Do and Keisha J. Cook and Yitao Shen and Scott A. McKinley},
+      journal = {Mathematical Biosciences and Engineering},
+      year = {2026},
+      volume = {19},
+    }
+
+Do L, Do D, Cook KJ, Shen Y, McKinley SA (2026). cplass: Continuous
+Piecewise-Linear Approximation via Stochastic Search. R package version
+0.1.2. https://github.com/linhdo154/cplass
+
+    @Manual{,
+      title = {cplass: Continuous Piecewise-Linear Approximation via Stochastic Search},
+      author = {Linh Do and Dat Do and Keisha J. Cook and Yitao Shen and Scott A. McKinley},
+      year = {2026},
+      note = {R package version 0.1.2},
+      url = {https://github.com/linhdo154/cplass},
+    }

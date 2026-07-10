@@ -1,0 +1,244 @@
+# cplass
+
+**CPLASS** (Continuous Piecewise-Linear Approximation via Stochastic
+Search) is an R package for detecting changes in velocity within
+multidimensional time series, with a focus on intracellular transport
+trajectories.
+
+Unlike traditional changepoint methods that target changes in *mean*,
+CPLASS models a *continuous* piecewise-linear anchor trajectory and
+searches the space of changepoint configurations with a tailored
+Metropolis-Hastings sampler. A domain-informed speed penalty discourages
+biophysically implausible segment speeds, and the Cumulative Speed
+Allocation (CSA) statistic summarizes inferred transport behavior
+without requiring an arbitrary motility threshold.
+
+Methodological details, simulation studies, and applications to
+lysosomal transport, quantum-dot motor assays, and EB1-GFP microtubule
+comet tracking are in the companion paper:
+
+> Do, L., Do, D., Cook, K. J., Shen, Y., & McKinley, S. A. (2026).
+> *Change-in-velocity detection in multidimensional data.*
+
+## Installation
+
+CPLASS is not yet on CRAN. Install the development version from GitHub:
+
+``` r
+
+# install.packages("remotes")
+remotes::install_github("linhdo154/cplass")
+```
+
+## Quick start
+
+``` r
+
+library(cplass)
+
+# A small built-in example: lysosome trajectories from the cell periphery
+data_file <- system.file("extdata", "Real_21_Periphery.csv", package = "cplass")
+traj <- read.csv(data_file)
+path <- traj[traj$index_path == 3, ]
+
+fit <- CPLASS(path$t, path$x, path$y, iter_max = 5000, burn_in = 500)
+
+fit$segments_inferred          # inferred segments: duration, speed, state
+plot_path_inferred(fit, motor = "Lysosome", max_speed = 2, path_index = 3)
+```
+
+The penalized criterion can have multiple local maxima (see Figure 4 of
+the paper), so for anything going into a reported result, prefer several
+independent starts:
+
+``` r
+
+ms <- CPLASS_multistart(path$t, path$x, path$y, n_starts = 5)
+ms$best$segments_inferred
+ms$score_spread   # small => starts agree on the same optimum
+```
+
+Summarize a fitted trajectory with the Cumulative Speed Allocation
+instead of an arbitrary motile/stationary speed cutoff:
+
+``` r
+
+speed_mesh <- seq(0, max(ms$best$segments_inferred$speeds), length.out = 100)
+csa <- compute_csa(ms$best$segments_inferred, speed_mesh)
+plot(csa$s, csa$csa, type = "l", xlab = "speed", ylab = "cumulative time")
+```
+
+See
+[`vignette("cplass_example")`](https://linhdo154.github.io/cplass/articles/cplass_example.md)
+for a complete walkthrough, or the [package
+website](https://linhdo154.github.io/CPLASS/) once published.
+
+## What’s in the box
+
+| Function | Purpose |
+|----|----|
+| [`CPLASS()`](https://linhdo154.github.io/cplass/reference/CPLASS-function.md) | Run the full algorithm on one 2D trajectory |
+| [`CPLASS_multistart()`](https://linhdo154.github.io/cplass/reference/CPLASS_multistart.md) | Multiple independent chains, keep the best |
+| [`check_convergence()`](https://linhdo154.github.io/cplass/reference/check_convergence.md) / [`plot_convergence()`](https://linhdo154.github.io/cplass/reference/plot_convergence.md) | Diagnose whether the search has stabilized |
+| [`compute_csa()`](https://linhdo154.github.io/cplass/reference/compute_csa.md) / [`csa_theoretical()`](https://linhdo154.github.io/cplass/reference/csa_theoretical.md) | Cumulative Speed Allocation summary |
+| [`plot_path_inferred()`](https://linhdo154.github.io/cplass/reference/plot_path_inferred.md) | Four-panel dashboard for one fitted trajectory |
+| [`piecewise_linear_con()`](https://linhdo154.github.io/cplass/reference/piecewise_linear_con.md) | Continuous piecewise-linear MLE given changepoints |
+| [`MHsearch()`](https://linhdo154.github.io/cplass/reference/MHsearch.md) | The Metropolis-Hastings search itself, for advanced use |
+
+Run [`library(help = "cplass")`](https://rdrr.io/r/base/library.html)
+for the full function index.
+
+## Citation
+
+If you use CPLASS in published work, please cite:
+
+    Do L, Do D, Cook KJ, Shen Y, McKinley SA (2026). Change-in-velocity
+    detection in multidimensional data. 
+
+A BibTeX entry is available via `citation("cplass")` once installed.
+
+## Contributing / issues
+
+Bug reports and feature requests are welcome at
+<https://github.com/linhdo154/cplass/issues>.
+
+## License
+
+MIT © Linh Do and contributors. See
+[LICENSE](https://linhdo154.github.io/cplass/LICENSE).
+
+# Package index
+
+## Main algorithm
+
+Run CPLASS and manage the Metropolis-Hastings search.
+
+- [`CPLASS()`](https://linhdo154.github.io/cplass/reference/CPLASS-function.md)
+  : Run CPLASS on a single 2D trajectory
+- [`CPLASS_multistart()`](https://linhdo154.github.io/cplass/reference/CPLASS_multistart.md)
+  : Run CPLASS from multiple independent random starts and keep the best
+- [`MHsearch()`](https://linhdo154.github.io/cplass/reference/MHsearch.md)
+  : Metropolis-Hastings search over the changepoint space
+- [`FinalMH()`](https://linhdo154.github.io/cplass/reference/FinalMH.md)
+  : Collect a Metropolis-Hastings trace into flat vectors/lists
+
+## Convergence diagnostics
+
+Check whether the stochastic search has stabilized.
+
+- [`check_convergence()`](https://linhdo154.github.io/cplass/reference/check_convergence.md)
+  : Check whether a single CPLASS chain has stopped improving
+- [`plot_convergence()`](https://linhdo154.github.io/cplass/reference/plot_convergence.md)
+  : Plot a CPLASS chain's convergence trace
+
+## Piecewise-linear fitting
+
+Continuous piecewise-linear MLE given a set of changepoints (Section 2.2
+of the paper).
+
+- [`piecewise_linear_con()`](https://linhdo154.github.io/cplass/reference/piecewise_linear_con.md)
+  : Continuous piecewise-linear fit given a set of changepoints
+- [`build_j_inferred()`](https://linhdo154.github.io/cplass/reference/build_j_inferred.md)
+  : Broadcast per-segment states back onto the original observation grid
+
+## Criterion function and penalties
+
+The penalized-likelihood criterion Phi(r) (Section 2.3).
+
+- [`CS()`](https://linhdo154.github.io/cplass/reference/CS.md) :
+  Criterion function for a changepoint configuration
+- [`loglikelihood()`](https://linhdo154.github.io/cplass/reference/loglikelihood.md)
+  : Gaussian log-likelihood from residual sum of squares
+- [`sSIC()`](https://linhdo154.github.io/cplass/reference/sSIC.md) :
+  Strengthened Schwarz Information Criterion penalty
+- [`AICc()`](https://linhdo154.github.io/cplass/reference/AICc.md) :
+  Corrected AIC penalty
+- [`cp_to_r()`](https://linhdo154.github.io/cplass/reference/cp_to_r.md)
+  : Convert a changepoint index vector to a 0/1 indicator vector
+- [`r_to_cp()`](https://linhdo154.github.io/cplass/reference/r_to_cp.md)
+  : Convert a 0/1 changepoint indicator vector to changepoint indices
+
+## MCMC proposal mechanisms
+
+The four changepoint-proposal types described in Section 2.4.
+
+- [`log_q_new_pmf()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`q_new()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`log_q_bd_pmf()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`q_bd()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`q_shift()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`q_as_pmf()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`q_as()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`q_ds_pmf()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`q_ds()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`q_bd2()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`log_q_bd2_pmf()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`proposal_function()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  [`pproposal()`](https://linhdo154.github.io/cplass/reference/proposals.md)
+  : Proposal functions for the CPLASS Metropolis-Hastings sampler
+
+## Cumulative Speed Allocation (CSA)
+
+Duration-weighted speed summaries (Cook et al. 2025).
+
+- [`compute_csa()`](https://linhdo154.github.io/cplass/reference/compute_csa.md)
+  : Cumulative Speed Allocation (CSA)
+- [`csa_theoretical()`](https://linhdo154.github.io/cplass/reference/csa_theoretical.md)
+  : Theoretical CSA under a two-state (stationary/motile) kinetic model
+- [`plot_csa()`](https://linhdo154.github.io/cplass/reference/plot_csa.md)
+  : Plot Cumulative Speed Allocation curves
+- [`summarize_segments()`](https://linhdo154.github.io/cplass/reference/summarize_segments.md)
+  : Stack segment summaries from a list of true (ground-truth) paths
+- [`summarize_segments_inferred()`](https://linhdo154.github.io/cplass/reference/summarize_segments_inferred.md)
+  : Stack segment summaries from a list of CPLASS-inferred paths
+- [`summarize_segments_cutoff()`](https://linhdo154.github.io/cplass/reference/summarize_segments_cutoff.md)
+  : Stack segment summaries from inferred paths (cutoff-labeled states)
+- [`summarize_segments_test()`](https://linhdo154.github.io/cplass/reference/summarize_segments_test.md)
+  : Stack segment summaries using a threshold-based test-state column
+
+## Visualization
+
+- [`plot_path_inferred()`](https://linhdo154.github.io/cplass/reference/plot_path_inferred.md)
+  : Four-panel dashboard for a single CPLASS-segmented trajectory
+- [`plot_path_inferred_second_version()`](https://linhdo154.github.io/cplass/reference/plot_path_inferred_second_version.md)
+  : Alternate 3-row layout for a single segmented trajectory
+- [`plot_path_inferred_xy()`](https://linhdo154.github.io/cplass/reference/plot_path_inferred_xy.md)
+  : Just the x-y panel of a segmented trajectory
+- [`plot_path_actual_and_inferred()`](https://linhdo154.github.io/cplass/reference/plot_path_actual_and_inferred.md)
+  : Side-by-side comparison of true vs. inferred segmentation
+- [`plot_msd()`](https://linhdo154.github.io/cplass/reference/plot_msd.md)
+  : Plot pathwise and ensemble MSD curves for a group, split by activity
+- [`get_plot_size()`](https://linhdo154.github.io/cplass/reference/get_plot_size.md)
+  : Compute shared plot bounds across a list of ground-truth paths
+- [`get_plot_size_inferred()`](https://linhdo154.github.io/cplass/reference/get_plot_size_inferred.md)
+  : Compute shared plot bounds across a list of inferred paths
+- [`get_one_plot_size()`](https://linhdo154.github.io/cplass/reference/get_one_plot_size.md)
+  : Compute plot bounds for a single inferred path
+
+## Mean squared displacement
+
+- [`pathwise_MSD()`](https://linhdo154.github.io/cplass/reference/pathwise_MSD.md)
+  : Pathwise mean squared displacement (MSD)
+- [`ensemble_MSD()`](https://linhdo154.github.io/cplass/reference/ensemble_MSD.md)
+  : Ensemble (group-averaged) MSD
+
+## Utilities
+
+- [`fill_missing_data()`](https://linhdo154.github.io/cplass/reference/fill_missing_data.md)
+  : Fill gaps in an unevenly-sampled 2D trajectory
+- [`duration_of_difference()`](https://linhdo154.github.io/cplass/reference/duration_of_difference.md)
+  : Total duration over which true and inferred segmentations disagree
+  on state
+- [`infer_states_speed_cutoff()`](https://linhdo154.github.io/cplass/reference/infer_states_speed_cutoff.md)
+  : Classify inferred segments as motile/stationary by a speed cutoff
+- [`cplass`](https://linhdo154.github.io/cplass/reference/cplass-package.md)
+  [`cplass-package`](https://linhdo154.github.io/cplass/reference/cplass-package.md)
+  : cplass: Continuous Piecewise-Linear Approximation via Stochastic
+  Search
+
+# Articles
+
+### All vignettes
+
+- [Getting started with
+  CPLASS](https://linhdo154.github.io/cplass/articles/cplass_example.md):

@@ -1,0 +1,9 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  cplass_example: cplass_example.html
+last_built: 2026-07-10T07:19Z
+urls:
+  reference: https://linhdo154.github.io/cplass/reference
+  article: https://linhdo154.github.io/cplass/articles
