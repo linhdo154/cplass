@@ -1,0 +1,18 @@
+# R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.Renviron
+*.Rcheck/
+*.tar.gz
+inst/doc
+
+# pkgdown site (built by CI, deployed to gh-pages; not committed to main)
+docs
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/

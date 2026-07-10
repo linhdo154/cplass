@@ -1,0 +1,32 @@
+#' cplass: Continuous Piecewise-Linear Approximation via Stochastic Search
+#'
+#' CPLASS detects changes in velocity ("change-in-slope") in multidimensional
+#' time series such as intracellular particle trajectories. It models
+#' observed positions as Gaussian fluctuations around a continuous
+#' piecewise-linear anchor path, and searches the space of changepoint
+#' configurations using a Metropolis-Hastings sampler with proposal moves
+#' tailored to the change-in-velocity problem (see Section 2.4 of the
+#' companion paper).
+#'
+#' The main entry points are:
+#' \itemize{
+#'   \item \code{\link{CPLASS}}: run the full algorithm on a single 2D
+#'     trajectory (t, x, y).
+#'   \item \code{\link{compute_csa}}, \code{\link{summarize_segments_inferred}}:
+#'     summarize inferred segmentations with the Cumulative Speed Allocation
+#'     statistic.
+#'   \item \code{\link{plot_path_inferred}}: visualize a single segmented
+#'     trajectory.
+#' }
+#'
+#' @section Performance notes:
+#' The internal fitting routine (\code{piecewise_linear_con}) and the MCMC
+#' driver (\code{MHsearch}) were rewritten for speed relative to the
+#' original research-script implementation, while keeping identical
+#' function signatures, return structures, and statistical behavior. See
+#' \code{inst/benchmarks/} (in the GitHub source repo)
+#' for benchmark details and a full list of changes.
+#'
+#' @keywords internal
+#' @importFrom rlang .data
+"_PACKAGE"

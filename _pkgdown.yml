@@ -1,0 +1,112 @@
+url: https://linhdo154.github.io/cplass/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    primary: "#2c3e50"
+
+home:
+  title: "cplass: Continuous Piecewise-Linear Approximation via Stochastic Search"
+
+development:
+  mode: unreleased
+
+repo:
+  url:
+    home: https://github.com/linhdo154/cplass
+    source: https://github.com/linhdo154/cplass/blob/HEAD/
+    issue: https://github.com/linhdo154/cplass/issues/
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: Getting started
+        href: articles/cplass_example.html
+
+reference:
+- title: "Main algorithm"
+  desc: "Run CPLASS and manage the Metropolis-Hastings search."
+  contents:
+  - CPLASS
+  - CPLASS_multistart
+  - MHsearch
+  - FinalMH
+
+- title: "Convergence diagnostics"
+  desc: "Check whether the stochastic search has stabilized."
+  contents:
+  - check_convergence
+  - plot_convergence
+
+- title: "Piecewise-linear fitting"
+  desc: "Continuous piecewise-linear MLE given a set of changepoints (Section 2.2 of the paper)."
+  contents:
+  - piecewise_linear_con
+  - build_j_inferred
+
+- title: "Criterion function and penalties"
+  desc: "The penalized-likelihood criterion Phi(r) (Section 2.3)."
+  contents:
+  - CS
+  - loglikelihood
+  - sSIC
+  - AICc
+  - cp_to_r
+  - r_to_cp
+
+- title: "MCMC proposal mechanisms"
+  desc: "The four changepoint-proposal types described in Section 2.4."
+  contents:
+  - proposal_function
+  - pproposal
+  - q_new
+  - q_bd
+  - q_bd2
+  - q_as
+  - q_ds
+  - q_shift
+  - log_q_new_pmf
+  - log_q_bd_pmf
+  - log_q_bd2_pmf
+  - q_as_pmf
+  - q_ds_pmf
+
+- title: "Cumulative Speed Allocation (CSA)"
+  desc: "Duration-weighted speed summaries (Cook et al. 2025)."
+  contents:
+  - compute_csa
+  - csa_theoretical
+  - plot_csa
+  - summarize_segments
+  - summarize_segments_inferred
+  - summarize_segments_cutoff
+  - summarize_segments_test
+
+- title: "Visualization"
+  contents:
+  - plot_path_inferred
+  - plot_path_inferred_second_version
+  - plot_path_inferred_xy
+  - plot_path_actual_and_inferred
+  - plot_msd
+  - get_plot_size
+  - get_plot_size_inferred
+  - get_one_plot_size
+
+- title: "Mean squared displacement"
+  contents:
+  - pathwise_MSD
+  - ensemble_MSD
+
+- title: "Utilities"
+  contents:
+  - fill_missing_data
+  - duration_of_difference
+  - infer_states_speed_cutoff
+  - cplass-package

@@ -1,0 +1,11 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.Rmd$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
+^dev$
+^cran-comments\.md$
+^\.DS_Store$
+^inst/benchmarks$
