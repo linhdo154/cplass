@@ -65,6 +65,25 @@
   resid <- cbind(x, y) - fitted
   RSS <- sum(resid * resid)
 
+  # Reject any fit whose residual degrees of freedom are not strictly
+  # positive, or whose RSS is non-finite/non-positive. With m segments fit
+  # jointly across both coordinates, the residual degrees of freedom are
+  # 2*n - 2*m - 2 = 2*(n - c(r) - 2), which is strictly positive exactly
+  # when c(r) <= n - 3. The existing rank check above catches n < ncol(A)
+  # (rank-deficient); it does NOT catch the case n == ncol(A) exactly,
+  # where the design is square and full rank but interpolates the data
+  # exactly (RSS = 0, resid_df = 0), which is an unbounded-criterion
+  # failure mode. This check is an independent safety net that also
+  # protects any caller (e.g. a direct call to piecewise_linear_con())
+  # that bypasses the upstream .r_is_admissible() guard in CS(). RSS is
+  # compared to 0 rather than a numerical tolerance, per the mathematical
+  # requirement RSS > 0; the is.finite() checks separately guard against
+  # NaN/Inf from ill-conditioned but nominally full-rank fits.
+  resid_df <- 2 * n - 2 * m - 2
+  if (!is.finite(RSS) || RSS <= 0 || !is.finite(resid_df) || resid_df <= 0) {
+    return(list(logical = FALSE))
+  }
+
   if (length(cp) > 0L) {
     sigma_hat <- sqrt(RSS / (2 * n - 2 * m - 2))
     vx <- cumsum(alpha[-1]) # alpha[2:(m+1)], cumulative sums per segment

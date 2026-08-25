@@ -14,10 +14,13 @@ check_convergence(
   s_cap = 1,
   gamma = 1.01,
   speed_pen = TRUE,
+  eta = 1,
   sd = NA,
   pen = "ssic",
   window_frac = 0.2,
-  show_progress = FALSE
+  show_progress = FALSE,
+  K_max = NULL,
+  min_gap = 1L
 )
 }
 \arguments{
@@ -42,6 +45,10 @@ proposal. Default \code{1/30}.}
 \item{speed_pen}{logical; whether to activate the speed penalty.
 Default \code{TRUE}.}
 
+\item{eta}{non-negative, dimensionless strength of the relative-excess
+speed penalty. Default 1. Setting \code{eta = 0} recovers the criterion
+without speed regularization.}
+
 \item{sd}{optional known noise sd.}
 
 \item{pen}{one of \code{"ssic"}, \code{"aicc"}, \code{"hybrid"}.}
@@ -51,6 +58,15 @@ improvement" window. Default 0.2 (last 20\%).}
 
 \item{show_progress}{logical; display a text progress bar. Default
 \code{TRUE}.}
+
+\item{K_max}{optional maximum number of segments, passed through to the
+underlying \code{\link{CPLASS}} call. \code{NULL} (default) means no
+additional practitioner bound beyond the structural ceiling. See
+\code{\link{MHsearch}}.}
+
+\item{min_gap}{minimum allowed segment-boundary spacing, passed through
+to the underlying \code{\link{CPLASS}} call. Default \code{1L}. See
+\code{\link{MHsearch}}.}
 }
 \value{
 A list with:

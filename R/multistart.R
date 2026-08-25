@@ -42,6 +42,13 @@
 #' @param n_cores number of cores to use via \code{parallel::mclapply()}
 #'   (not available on Windows; falls back to sequential with a message).
 #'   Default 1 (sequential).
+#' @param K_max optional maximum number of segments, passed through to
+#'   every chain's \code{\link{CPLASS}} call. \code{NULL} (default) means
+#'   no additional practitioner bound beyond the structural ceiling. See
+#'   \code{\link{MHsearch}}.
+#' @param min_gap minimum allowed segment-boundary spacing, passed through
+#'   to every chain's \code{\link{CPLASS}} call. Default \code{1L}. See
+#'   \code{\link{MHsearch}}.
 #' @return A list with:
 #'   \itemize{
 #'     \item `best`: the winning \code{\link{CPLASS}} output (highest
@@ -70,9 +77,10 @@
 #' @export
 CPLASS_multistart <- function(t, x, y, lambda_r = 1 / 30,
                                 iter_max = 5000, burn_in = 500, s_cap = 1,
-                                gamma = 1.01, speed_pen = TRUE, sd = NA,
+                                gamma = 1.01, speed_pen = TRUE, eta = 1, sd = NA,
                                 pen = "ssic", n_starts = 5, patience = "auto",
-                                seeds = NULL, n_cores = 1, show_progress = FALSE) {
+                                seeds = NULL, n_cores = 1, show_progress = FALSE,
+                                K_max = NULL, min_gap = 1L) {
   if (identical(patience, "auto")) {
     patience_used <- ceiling(0.3 * iter_max)
   } else {
@@ -89,8 +97,9 @@ CPLASS_multistart <- function(t, x, y, lambda_r = 1 / 30,
   run_one <- function(s) {
     set.seed(s)
     CPLASS(t, x, y, lambda_r = lambda_r, iter_max = iter_max, burn_in = burn_in,
-           s_cap = s_cap, gamma = gamma, speed_pen = speed_pen, sd = sd,
-           pen = pen, show_progress = show_progress, patience = patience_used)
+           s_cap = s_cap, gamma = gamma, speed_pen = speed_pen, eta = eta, sd = sd,
+           pen = pen, show_progress = show_progress, patience = patience_used,
+           K_max = K_max, min_gap = min_gap)
   }
 
   if (n_cores > 1) {

@@ -2,8 +2,9 @@
 #'
 #' Runs the tailored MH sampler described in Section 2.4 of the companion
 #' paper for a single 2D trajectory. This has the same signature and return
-#' structure as the original research-script \code{MHsearch()}, but is
-#' substantially faster internally. See "Performance" below.
+#' structure as the original research-script \code{MHsearch()}. See
+#' "Performance" and "Proposal mechanism" below for how the internals
+#' differ from that original script.
 #'
 #' @section Performance:
 #' The original implementation recomputed the full piecewise-linear fit
@@ -21,12 +22,18 @@
 #' which previously made the trace step scale quadratically in
 #' `iter_max`.
 #'
-#' Statistically, this produces the same target distribution and the same
-#' accept/reject decisions as the original for a given stream of random
-#' draws in the same order. Because the birth-vector proposal now uses
-#' \code{stats::rbinom()} instead of \code{Rlab::rbern()}, results will not
-#' be bit-identical to the original code for the same \code{set.seed()},
-#' but are statistically equivalent (both are Bernoulli draws).
+#' @section Proposal mechanism:
+#' The changepoint proposal mechanism (\code{\link{proposals}}) mixes four
+#' move types with fixed weights (1/4, 1/8, 1/8, 1/2) at every state, and
+#' evaluates the forward and reverse proposal densities for the same move
+#' type that generated the proposal. This is a deliberate correction, not
+#' a performance refactor: an earlier version of this mechanism
+#' redistributed the move-type weights at boundary/saturated states and
+#' could re-derive a different move type for the reverse-direction density
+#' than the one that actually generated the proposal, which does not
+#' satisfy detailed balance. Results are therefore not expected to match
+#' that earlier mechanism's accept/reject decisions, even given the same
+#' random-draw stream.
 #'
 #' @section Early stopping:
 #' If \code{patience} is set, \code{iter_max} becomes a safety ceiling
@@ -47,6 +54,8 @@
 #'   is set; see "Early stopping").
 #' @param burn_in number of initial iterations discarded from the trace.
 #' @param s_cap maximum segment speed with no penalty.
+#' @param eta non-negative, dimensionless strength of the relative-excess
+#'   speed penalty. Default 1; \code{eta = 0} removes this regularization.
 #' @param gamma exponent for the sSIC penalty.
 #' @param speed_control 1 to activate the speed penalty, 0 to deactivate.
 #' @param sd optional known noise sd (see \code{\link{loglikelihood}}).
@@ -56,6 +65,15 @@
 #' @param patience if not \code{NULL} (default), stop early once the
 #'   post-burn-in running-maximum criterion score hasn't improved for this
 #'   many consecutive iterations. See "Early stopping".
+#' @param K_max optional maximum number of segments (the manuscript's
+#'   practitioner-specified \eqn{\bar k} in Eq. 2.6); passed through to
+#'   \code{\link{CS}} and the proposal mechanism (\code{\link{proposals}}).
+#'   \code{NULL} (default) means no additional practitioner bound is
+#'   imposed beyond the structural \eqn{K(r) \le n-2} ceiling -- the
+#'   manuscript intentionally leaves \eqn{\bar k} to the practitioner.
+#' @param min_gap minimum allowed segment-boundary spacing (observation-
+#'   index units), passed through to \code{\link{CS}} and the proposal
+#'   mechanism. Default \code{1L} (structurally non-binding).
 #' @return A list with `cps_list` (post-burn-in trace), `info_table`
 #'   (post-burn-in diagnostics), `update_info` (acceptance rate), and
 #'   `stopped_early` / `iterations_used` (whether/when patience triggered;
@@ -63,20 +81,24 @@
 #' @export
 MHsearch <- function(t, x, y, dt, lambda_r = 1 / 30,
                       iter_max = 5000, burn_in = 500, s_cap = 1,
-                      gamma = 1.01, speed_control = 0, sd = NA, pen = "ssic",
-                      show_progress = TRUE, patience = NULL) {
+                      gamma = 1.01, speed_control = 0, eta = 1, sd = NA,
+                      pen = "ssic",
+                      show_progress = TRUE, patience = NULL,
+                      K_max = NULL, min_gap = 1L) {
+  .validate_K_max_min_gap(K_max, min_gap)
   N <- length(t)
   penalty_coef <- max(4, log(N))^gamma
 
   fit_state <- function(r) {
-    CS(t, x, y, r, penalty_coef, s_cap, speed_control, sd = sd, pen = pen, gamma = gamma)
+    CS(t, x, y, r, penalty_coef, s_cap, speed_control, eta = eta, sd = sd,
+       pen = pen, gamma = gamma, K_max = K_max, min_gap = min_gap)
   }
 
-  r0 <- q_new(lambda_r, dt = dt, N)
+  r0 <- .q_new_core(integer(N - 2L), N, lambda_r, dt, K_max, min_gap)
   cur <- fit_state(r0)
   attempts <- 0L
   while (!isTRUE(cur$logical) && attempts < 100L) {
-    r0 <- q_new(lambda_r, dt = dt, N)
+    r0 <- .q_new_core(integer(N - 2L), N, lambda_r, dt, K_max, min_gap)
     cur <- fit_state(r0)
     attempts <- attempts + 1L
   }
@@ -112,34 +134,52 @@ MHsearch <- function(t, x, y, dt, lambda_r = 1 / 30,
   stopped_early <- FALSE
 
   for (count in seq_len(iter_max)) {
-    u <- stats::runif(1)
-    pp <- proposal_function(u, r0, N, lambda_r, dt = dt)
+    pp <- proposal_function(r0, N, lambda_r, dt, K_max = K_max, min_gap = min_gap)
     r_prop <- pp$r_prop
-    status <- pp$status
+    move_type <- pp$move_type
 
-    prop <- fit_state(r_prop)
-
-    A <- 1
-    logA <- -Inf
-    if (!isTRUE(prop$logical) || !isTRUE(cur$logical)) {
-      A <- 0
-    } else if (prop$s == 0) {
-      A <- 0
-    } else {
-      logA <- prop$s +
-        pproposal(u, r0, N, lambda_r, r_prop, 1 - status, dt = dt) -
-        cur$s -
-        pproposal(u, r_prop, N, lambda_r, r0, status, dt = dt)
-    }
-
-    accept <- A != 0 && (logA >= 0 || stats::runif(1) < exp(logA))
-
-    if (accept) {
-      r1 <- r_prop
-      new_state <- prop
-    } else {
+    if (identical(r_prop, r0)) {
+      # Self-transition: the proposal mechanism already determined no
+      # legal off-diagonal move of this type is available from the current
+      # state (or an admissible draw happened to equal it). No refit, no
+      # proposal-density evaluation, and in particular no Type-1 self-loop
+      # DP (.bernoulli_admissible_mass()) is invoked here -- that exact
+      # diagonal density is only ever computed when something explicitly
+      # queries pproposal()/log_q_new_pmf() with r_target == r_source
+      # (the unit tests and exhaustive detailed-balance checks do this;
+      # this hot loop never does).
       r1 <- r0
       new_state <- cur
+      prop <- cur
+      logA <- 0
+    } else {
+      prop <- fit_state(r_prop)
+
+      if (!isTRUE(prop$logical) || !isTRUE(cur$logical)) {
+        # Hard rejection: an invalid fit (e.g. rank-deficient) can never be
+        # accepted, independent of its criterion score. A criterion score
+        # that happens to equal exactly 0 is NOT a reason to reject on its
+        # own (exp(0) = 1 is a perfectly valid contribution to the MH
+        # ratio) -- only `logical = FALSE` identifies an invalid state.
+        logA <- -Inf
+        accept <- FALSE
+      } else {
+        # CRITICAL: forward and reverse proposal densities are evaluated for
+        # the SAME move_type that actually generated r_prop -- never
+        # re-derived from a fresh u draw or from which state is "given".
+        log_q_fwd <- pproposal(move_type, r_prop, r0, N, lambda_r, dt, K_max, min_gap)
+        log_q_rev <- pproposal(move_type, r0, r_prop, N, lambda_r, dt, K_max, min_gap)
+        logA <- (prop$s - cur$s) + (log_q_rev - log_q_fwd)
+        accept <- is.finite(logA) && (logA >= 0 || stats::runif(1) < exp(logA))
+      }
+
+      if (accept) {
+        r1 <- r_prop
+        new_state <- prop
+      } else {
+        r1 <- r0
+        new_state <- cur
+      }
     }
 
     pla1 <- new_state$pla
