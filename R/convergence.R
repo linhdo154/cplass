@@ -24,6 +24,13 @@
 #' @inheritParams CPLASS-function
 #' @param window_frac fraction of post-burn-in iterations used as the "no
 #'   improvement" window. Default 0.2 (last 20\%).
+#' @param K_max optional maximum number of segments, passed through to the
+#'   underlying \code{\link{CPLASS}} call. \code{NULL} (default) means no
+#'   additional practitioner bound beyond the structural ceiling. See
+#'   \code{\link{MHsearch}}.
+#' @param min_gap minimum allowed segment-boundary spacing, passed through
+#'   to the underlying \code{\link{CPLASS}} call. Default \code{1L}. See
+#'   \code{\link{MHsearch}}.
 #' @return A list with:
 #'   \itemize{
 #'     \item `converged`: logical.
@@ -47,13 +54,13 @@
 #' @export
 check_convergence <- function(t, x, y, lambda_r = 1 / 30,
                                 iter_max = 5000, burn_in = 500, s_cap = 1,
-                                gamma = 1.01, speed_pen = TRUE, sd = NA,
+                                gamma = 1.01, speed_pen = TRUE, eta = 1, sd = NA,
                                 pen = "ssic", window_frac = 0.2,
-                                show_progress = FALSE) {
+                                show_progress = FALSE, K_max = NULL, min_gap = 1L) {
   res <- CPLASS(t, x, y, lambda_r = lambda_r, iter_max = iter_max,
                 burn_in = burn_in, s_cap = s_cap, gamma = gamma,
-                speed_pen = speed_pen, Diagnostic = TRUE, sd = sd, pen = pen,
-                show_progress = show_progress)
+                speed_pen = speed_pen, eta = eta, Diagnostic = TRUE, sd = sd, pen = pen,
+                show_progress = show_progress, K_max = K_max, min_gap = min_gap)
 
   if (is.null(res$pl)) {
     stop("CPLASS() failed to converge on a valid fit; cannot check convergence.",

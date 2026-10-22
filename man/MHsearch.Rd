@@ -15,10 +15,13 @@ MHsearch(
   s_cap = 1,
   gamma = 1.01,
   speed_control = 0,
+  eta = 1,
   sd = NA,
   pen = "ssic",
   show_progress = TRUE,
-  patience = NULL
+  patience = NULL,
+  K_max = NULL,
+  min_gap = 1L
 )
 }
 \arguments{
@@ -44,6 +47,9 @@ is set; see "Early stopping").}
 
 \item{speed_control}{1 to activate the speed penalty, 0 to deactivate.}
 
+\item{eta}{non-negative, dimensionless strength of the relative-excess
+speed penalty. Default 1; \code{eta = 0} removes this regularization.}
+
 \item{sd}{optional known noise sd (see \code{\link{loglikelihood}}).}
 
 \item{pen}{one of \code{"ssic"}, \code{"aicc"}, \code{"hybrid"}.}
@@ -54,6 +60,17 @@ is set; see "Early stopping").}
 \item{patience}{if not \code{NULL} (default), stop early once the
 post-burn-in running-maximum criterion score hasn't improved for this
 many consecutive iterations. See "Early stopping".}
+
+\item{K_max}{optional maximum number of segments (the manuscript's
+practitioner-specified \eqn{\bar k} in Eq. 2.6); passed through to
+\code{\link{CS}} and the proposal mechanism (\code{\link{proposals}}).
+\code{NULL} (default) means no additional practitioner bound is
+imposed beyond the structural \eqn{K(r) \le n-2} ceiling -- the
+manuscript intentionally leaves \eqn{\bar k} to the practitioner.}
+
+\item{min_gap}{minimum allowed segment-boundary spacing (observation-
+index units), passed through to \code{\link{CS}} and the proposal
+mechanism. Default \code{1L} (structurally non-binding).}
 }
 \value{
 A list with `cps_list` (post-burn-in trace), `info_table`
@@ -64,8 +81,9 @@ A list with `cps_list` (post-burn-in trace), `info_table`
 \description{
 Runs the tailored MH sampler described in Section 2.4 of the companion
 paper for a single 2D trajectory. This has the same signature and return
-structure as the original research-script \code{MHsearch()}, but is
-substantially faster internally. See "Performance" below.
+structure as the original research-script \code{MHsearch()}. See
+"Performance" and "Proposal mechanism" below for how the internals
+differ from that original script.
 }
 \section{Performance}{
 
@@ -83,13 +101,21 @@ from ~3 to 1 per iteration. The diagnostic trace (`info_table`) is also
 built from preallocated vectors instead of row-by-row `bind_rows()`,
 which previously made the trace step scale quadratically in
 `iter_max`.
+}
 
-Statistically, this produces the same target distribution and the same
-accept/reject decisions as the original for a given stream of random
-draws in the same order. Because the birth-vector proposal now uses
-\code{stats::rbinom()} instead of \code{Rlab::rbern()}, results will not
-be bit-identical to the original code for the same \code{set.seed()},
-but are statistically equivalent (both are Bernoulli draws).
+\section{Proposal mechanism}{
+
+The changepoint proposal mechanism (\code{\link{proposals}}) mixes four
+move types with fixed weights (1/4, 1/8, 1/8, 1/2) at every state, and
+evaluates the forward and reverse proposal densities for the same move
+type that generated the proposal. This is a deliberate correction, not
+a performance refactor: an earlier version of this mechanism
+redistributed the move-type weights at boundary/saturated states and
+could re-derive a different move type for the reverse-direction density
+than the one that actually generated the proposal, which does not
+satisfy detailed balance. Results are therefore not expected to match
+that earlier mechanism's accept/reject decisions, even given the same
+random-draw stream.
 }
 
 \section{Early stopping}{

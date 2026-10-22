@@ -23,6 +23,9 @@
 #'   3.1.1 of the companion paper for the rationale).
 #' @param speed_pen logical; whether to activate the speed penalty.
 #'   Default \code{TRUE}.
+#' @param eta non-negative, dimensionless strength of the relative-excess
+#'   speed penalty. Default 1. Setting \code{eta = 0} recovers the criterion
+#'   without speed regularization.
 #' @param Diagnostic logical; if \code{TRUE}, also return the MCMC
 #'   diagnostic trace (`info_table`, `update_info`). Default \code{FALSE}.
 #' @param sd optional known noise sd.
@@ -35,6 +38,14 @@
 #'   \code{\link{MHsearch}}'s "Early stopping" section for details and
 #'   caveats (in particular: this doesn't protect against local maxima —
 #'   pair it with \code{\link{CPLASS_multistart}} if that's a concern).
+#' @param K_max optional maximum number of segments (the manuscript's
+#'   practitioner-specified \eqn{\bar k} in Eq. 2.6). \code{NULL} (default)
+#'   means no additional practitioner bound is imposed beyond the
+#'   structural \eqn{K(r) \le n-2} ceiling -- the manuscript intentionally
+#'   leaves \eqn{\bar k} to the practitioner. See \code{\link{MHsearch}}.
+#' @param min_gap minimum allowed segment-boundary spacing, in
+#'   observation-index units. Default \code{1L} (structurally non-binding).
+#'   See \code{\link{MHsearch}}.
 #' @return A list with `segments_inferred` and `path_inferred` tibbles (see
 #'   \code{\link{piecewise_linear_con}}, \code{old_version = FALSE}), plus
 #'   `best_score`: the criterion value \eqn{\Phi(r)} of the selected
@@ -58,9 +69,10 @@
 #' @export
 CPLASS <- function(t, x, y, lambda_r = 1 / 30,
                     iter_max = 5000, burn_in = 500, s_cap = 1,
-                    gamma = 1.01, speed_pen = TRUE, Diagnostic = FALSE,
+                    gamma = 1.01, speed_pen = TRUE, eta = 1,
+                    Diagnostic = FALSE,
                     sd = NA, pen = "ssic", show_progress = TRUE,
-                    patience = NULL) {
+                    patience = NULL, K_max = NULL, min_gap = 1L) {
   dt <- min(diff(t))
   speed_control <- if (isTRUE(speed_pen)) 1 else 0
 
@@ -75,8 +87,9 @@ CPLASS <- function(t, x, y, lambda_r = 1 / 30,
       MHsearch(t, x, y, dt, lambda_r = lambda_r,
                iter_max = iter_max, burn_in = burn_in,
                s_cap = s_cap, gamma = gamma,
-               speed_control = speed_control, sd = sd, pen = pen,
-               show_progress = show_progress, patience = patience),
+               speed_control = speed_control, eta = eta, sd = sd, pen = pen,
+               show_progress = show_progress, patience = patience,
+               K_max = K_max, min_gap = min_gap),
       error = function(e) e
     )
 

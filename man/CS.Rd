@@ -4,7 +4,21 @@
 \alias{CS}
 \title{Criterion function for a changepoint configuration}
 \usage{
-CS(t, x, y, r, p1, s_cap, with_speed, sd = NA, pen = "ssic", gamma)
+CS(
+  t,
+  x,
+  y,
+  r,
+  p1,
+  s_cap,
+  with_speed,
+  eta = 1,
+  sd = NA,
+  pen = "ssic",
+  gamma,
+  K_max = NULL,
+  min_gap = 1L
+)
 }
 \arguments{
 \item{t, x, y}{trajectory data.}
@@ -20,11 +34,27 @@ original script; \code{gamma} is what actually parametrizes sSIC here).}
 
 \item{with_speed}{1 to activate the speed penalty, 0 to deactivate.}
 
+\item{eta}{non-negative, dimensionless strength of the speed penalty.
+The speed contribution is
+\eqn{\eta \sum_j (\hat s_j/s_{cap} - 1)_+}; \code{eta = 0}
+recovers the criterion without speed regularization.}
+
 \item{sd}{optional known noise sd, passed to \code{\link{loglikelihood}}.}
 
 \item{pen}{one of \code{"ssic"}, \code{"aicc"}, \code{"hybrid"}.}
 
 \item{gamma}{exponent for the sSIC penalty.}
+
+\item{K_max}{optional maximum number of segments \eqn{K(r) = c(r)+1}
+(the manuscript's practitioner-specified \eqn{\bar k} in Eq. 2.6). If
+\code{NULL} (default), no additional practitioner bound is enforced
+beyond the structural bound \eqn{K(r) \le n-2} implied by
+\eqn{c(r) \le n-3}. See \code{.r_is_admissible()} -- the manuscript
+intentionally leaves \eqn{\bar k} to the practitioner.}
+
+\item{min_gap}{minimum allowed spacing between adjacent segment
+boundaries, in observation-index units. Default \code{1L} is the
+weakest possible requirement (structurally non-binding).}
 }
 \value{
 A list with `s` (criterion value), `llh`, `p` (penalty), `pv`
@@ -35,5 +65,5 @@ Computes \eqn{\Phi(r) = 2 \hat L_n - \mathrm{pen}(r)} (Definition 1/2 of
 the companion paper): the penalized log-likelihood of the continuous
 piecewise-linear fit associated with a changepoint vector \code{r}, using
 either the strengthened SIC penalty, AICc, or the max of the two
-("hybrid"), plus an optional speed penalty.
+("hybrid"), plus an optional dimensionless speed penalty.
 }

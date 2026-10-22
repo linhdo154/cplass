@@ -15,11 +15,14 @@ CPLASS(
   s_cap = 1,
   gamma = 1.01,
   speed_pen = TRUE,
+  eta = 1,
   Diagnostic = FALSE,
   sd = NA,
   pen = "ssic",
   show_progress = TRUE,
-  patience = NULL
+  patience = NULL,
+  K_max = NULL,
+  min_gap = 1L
 )
 }
 \arguments{
@@ -44,6 +47,10 @@ proposal. Default \code{1/30}.}
 \item{speed_pen}{logical; whether to activate the speed penalty.
 Default \code{TRUE}.}
 
+\item{eta}{non-negative, dimensionless strength of the relative-excess
+speed penalty. Default 1. Setting \code{eta = 0} recovers the criterion
+without speed regularization.}
+
 \item{Diagnostic}{logical; if \code{TRUE}, also return the MCMC
 diagnostic trace (`info_table`, `update_info`). Default \code{FALSE}.}
 
@@ -60,6 +67,16 @@ iterations, rather than always running the full `iter_max`. See
 \code{\link{MHsearch}}'s "Early stopping" section for details and
 caveats (in particular: this doesn't protect against local maxima —
 pair it with \code{\link{CPLASS_multistart}} if that's a concern).}
+
+\item{K_max}{optional maximum number of segments (the manuscript's
+practitioner-specified \eqn{\bar k} in Eq. 2.6). \code{NULL} (default)
+means no additional practitioner bound is imposed beyond the
+structural \eqn{K(r) \le n-2} ceiling -- the manuscript intentionally
+leaves \eqn{\bar k} to the practitioner. See \code{\link{MHsearch}}.}
+
+\item{min_gap}{minimum allowed segment-boundary spacing, in
+observation-index units. Default \code{1L} (structurally non-binding).
+See \code{\link{MHsearch}}.}
 }
 \value{
 A list with `segments_inferred` and `path_inferred` tibbles (see
